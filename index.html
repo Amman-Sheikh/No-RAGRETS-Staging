@@ -1739,6 +1739,28 @@
     /* ---------- Honeypot (spam trap) — visually hidden ---------- */
     .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
+    /* ---------- Current Special (client-editable promo banner) ---------- */
+    .promo-banner {
+      background: var(--ink);
+      color: #fff;
+      padding: 18px 24px;
+      text-align: center;
+    }
+    .promo-banner .container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px 18px;
+    }
+    .promo-banner strong {
+      color: var(--champagne-bright);
+      font-weight: 700;
+    }
+    .promo-banner a.btn {
+      margin-left: 8px;
+    }
+
     /* CAL.com */
     .booking-calendar {
       width: 100%;
@@ -1911,6 +1933,22 @@
           </svg>DFW-based premium studio</div>
       </div>
     </div>
+
+    <!-- ===================== CURRENT SPECIAL ===================== -->
+    <!--
+      EDIT ME — this is the only section you need to touch to rotate the offer.
+      Just change the text inside <strong> and the sentence after it, and the
+      button label/link if needed. Nothing else on the page needs to change.
+      To hide the whole banner temporarily, add style="display:none" to the
+      <section class="promo-banner"> tag below.
+    -->
+    <section class="promo-banner">
+      <div class="container">
+        <span><strong>Current Special:</strong> $50 off your first session — book your free consultation this month.</span>
+        <a href="#plan" class="btn btn-gold">Claim Offer</a>
+      </div>
+    </section>
+    <!-- ===================== END CURRENT SPECIAL ===================== -->
 
     <!-- ===================== EMOTIONAL HOOK ===================== -->
     <section class="emotional section-pad">

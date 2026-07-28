@@ -4,7 +4,15 @@
 // instead of Vercel's (req, res).
 
 const BREVO_CONTACTS_URL = "https://api.brevo.com/v3/contacts";
+const BREVO_API_KEY = process.env.Brevo_API_Key || process.env.BREVO_API_KEY;
 const BREVO_LIST_ID = 3; // "Consultation Leads"
+
+function normalizePhoneE164(raw) {
+  const digits = (raw || "").replace(/\D/g, "");
+  const tenDigits = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (/^[2-9]\d{2}[2-9]\d{6}$/.test(tenDigits)) return `+1${tenDigits}`;
+  return null; // unparseable — caller should skip SMS field rather than block the lead
+}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,8 +38,8 @@ exports.handler = async function handler(event) {
   }
 
   // ── Environment check ────────────────────────────────────────────────
-  if (!process.env.BREVO_API_KEY) {
-    console.error("[submit-lead] BREVO_API_KEY is not set in environment variables.");
+  if (!BREVO_API_KEY) {
+    console.error("[submit-lead] No Brevo API key found — checked Brevo_API_Key and BREVO_API_KEY env vars.");
     return json(500, { error: "Server configuration error — API key missing." });
   }
 
@@ -54,7 +62,8 @@ exports.handler = async function handler(event) {
   const email = (body.email || "").trim().toLowerCase();
   const firstName = (body.firstName || "").trim();
   const lastName = (body.lastName || "").trim();
-  const phone = (body.phone || "").trim();
+  const phoneRaw = (body.phone || "").trim();
+  const phoneE164 = normalizePhoneE164(phoneRaw);
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json(400, { error: "A valid email address is required." });
@@ -69,8 +78,11 @@ exports.handler = async function handler(event) {
   // Standard Brevo fields
   if (firstName) attributes.FIRSTNAME = firstName;
   if (lastName) attributes.LASTNAME = lastName;
-  if (phone) attributes.SMS = phone;
-  if (phone) attributes.PHONE = phone;
+  if (phoneE164) attributes.SMS = phoneE164;
+  if (phoneRaw) attributes.PHONE = phoneE164 || phoneRaw;
+  if (phoneRaw && !phoneE164) {
+    console.warn("[submit-lead] Phone number could not be normalized to E.164 — skipping SMS field, lead still saved:", phoneRaw);
+  }
 
   // Custom tattoo fields
   if (body.CITY) attributes.CITY = body.CITY;
@@ -116,7 +128,7 @@ exports.handler = async function handler(event) {
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "api-key": process.env.BREVO_API_KEY,
+          "api-key": BREVO_API_KEY,
         },
         body: JSON.stringify(brevoPayload),
         signal: controller.signal,
